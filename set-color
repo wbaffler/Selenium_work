@@ -1,0 +1,39 @@
+from input_data import LOGIN, PASSWORD
+from login import authorize
+from selenium.webdriver.support.ui import Select
+
+with open('colors.txt') as file:
+    input_arr = file.readlines()
+    input_arr = [line.rstrip() for line in input_arr]
+print(input_arr)
+
+default_link = 'https://avangard66.ru/wp-admin/edit-tags.php?taxonomy=pa_czvet-yu-plast&post_type=product&orderby=count&order=desc'
+driver = authorize(LOGIN, PASSWORD, default_link)
+
+driver.implicitly_wait(10)
+
+total_pages = driver.find_element_by_class_name('total-pages').text
+links = []
+
+for i in range(int(total_pages))[1:]:
+    page_link = default_link + '&paged=' + str(i+1)
+    driver.get(page_link)
+    driver.implicitly_wait(10)
+
+    attributes_class = driver.find_elements_by_class_name('edit')
+    for a in attributes_class:
+        links.append(a.find_element_by_tag_name('a').get_property('href'))
+i = 0
+for link in links:
+    driver.get(link)
+    driver.implicitly_wait(10)
+
+    driver.find_element_by_class_name('wp-color-result').click()
+    driver.implicitly_wait(10)
+    color_input = driver.find_element_by_class_name('wp-color-picker')
+    if color_input.get_property('value') == '':
+        driver.find_element_by_class_name('color-picker').send_keys(input_arr[i])
+        driver.find_element_by_class_name('edit-tag-actions').find_element_by_class_name('button-primary').click()
+        driver.implicitly_wait(10)
+        i += 1
+print(i)
